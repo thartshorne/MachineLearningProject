@@ -1,0 +1,44 @@
+---
+title: "MachLearnWriteUp"
+author: "Tom Hartshorne"
+date: "August 20, 2015"
+output: html_document
+---
+# Practical Machine Learning Final Project
+
+
+
+### Synopsis:
+
+The goal of this project was to use the data supplied from the Human Activity Recognition study to create a machine prediction model that could accurately predict how well a participant did a certain barbell lift exercise. This was accomplished with 98.6% accuracy, using a random forest trained model. 
+
+### The Model
+
+The model was created using the caret package in R, specifically the train function, with the random forest method. This model was chosen for its accuracy in large samples, despite the large amount of computing required. The features of the data that were irrelevant based on the testing data were eliminated with the following code:
+
+```{r, eval=FALSE}
+varDrop = names(testdata[,colMeans(is.na(testdata)) > 0]
+traindata2 = traindata[,!(names(traindata) %in% varDrop)]
+cleantrain = traindata2[,-c(6,7)] ###eliminate the bookkeping variables
+```
+
+These features were eliminated because they were null in the test set and therefore including them would not help us in predicting that set. 
+
+Then the training data was split into a training and testing set:
+```{r, eval=FALSE}
+inTrain = createDataPartition(cleantrain$classe, list = FALSE, p=.5)
+training = cleantrain[inTrain,]
+testing = cleantrain[-inTrain,]
+```
+
+To shorten the computation time, the training controls were adjusted:
+```{r, eval=FALSE}
+fitControl = trainControl(method = "repeatedcv", number = 5, repeats = 3)
+```
+
+And finally, the code for training the model using caret
+```{r, eval = FALSE}
+myMod = train(classe ~ ., data = training, trControl = fitControl, method = "rf", prox = TRUE)
+```
+
+This model uses a K-fold cross validation with 5 folds, repeated 3 times. I estimate the out of sample error to be about 2%, and this model scored a 19/20 on the test dataset. 
